@@ -1,0 +1,11 @@
+# Git Ignore
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+dist/
+build/
+*.spec
+icon.icns
+icon.iconset/
+/tmp/match_watcher.log
