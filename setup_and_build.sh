@@ -47,6 +47,7 @@ pyinstaller --noconfirm --windowed --onefile \
     --name "Match Watcher" \
     --icon "icon.icns" \
     --add-data "app_icon.png:." \
+    --add-data ".env:." \
     app.py
 
 echo "---------------------------------------------------------"

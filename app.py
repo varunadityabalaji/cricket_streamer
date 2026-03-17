@@ -7,10 +7,18 @@ import logging
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv()
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+load_dotenv(resource_path(".env"))
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLineEdit, QPushButton, QLabel, 
-                             QSlider, QFrame, QStackedWidget)
+                             QSlider, QFrame, QStackedWidget, QMessageBox)
 from PyQt6.QtCore import Qt, QTimer, QPoint, QEvent
 from PyQt6.QtGui import QColor, QPalette, QFont, QIcon
 
@@ -59,7 +67,7 @@ class IPTVPlayer(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Match Watcher Pro")
-        self.setWindowIcon(QIcon("app_icon.png"))
+        self.setWindowIcon(QIcon(resource_path("app_icon.png")))
         self.resize(1100, 750)
         self.setMinimumSize(850, 600)
         
