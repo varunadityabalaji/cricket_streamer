@@ -257,6 +257,7 @@ class IPTVPlayer(QMainWindow):
         self.overlay.setGeometry(x, y, w, h)
 
     def switch_channel(self, channel_name):
+        logging.info(f"Switching channel to: {channel_name}")
         self.current_channel = channel_name
         url = self.channels.get(channel_name, "")
         
@@ -265,6 +266,7 @@ class IPTVPlayer(QMainWindow):
             btn.setChecked(name == channel_name)
         
         if not url:
+            logging.warning(f"Link missing for {channel_name}")
             self.status_label.setText(f"ERROR: {channel_name} LINK MISSING")
             QMessageBox.warning(self, "Link Missing", 
                               f"The {channel_name} stream link was not found in your .env file.")
@@ -272,7 +274,10 @@ class IPTVPlayer(QMainWindow):
 
         self.url_input.setText(url)
         self.status_label.setText(f"SWITCHING TO {channel_name}...")
-        self.play_stream()
+        
+        # Use a short delay to prevent event loop saturation and allow UI to refresh
+        # before the potentially blocking play_stream call.
+        QTimer.singleShot(100, self.play_stream)
 
     def embed_vlc(self):
         if platform.system() == "Darwin":
@@ -306,28 +311,54 @@ class IPTVPlayer(QMainWindow):
 
     def play_stream(self):
         url = self.url_input.text().strip()
-        if url:
-            try:
-                media = self.instance.media_new(url)
-                self.vlc_player.set_media(media)
-                self.vlc_player.play()
-                self.is_playing_requested = True
-                self.status_label.setText("CONNECTING...")
-                self.hide_timer.start()
-            except Exception as e:
-                logging.error(f"Playback error: {e}")
-                self.status_label.setText("PLAYBACK ERROR")
+        if not url:
+            return
+            
+        logging.info(f"Play Stream requested: {url}")
+        try:
+            # Stop existing playback if any
+            if self.vlc_player.is_playing():
+                logging.info("Stopping existing playback...")
+                self.vlc_player.stop()
+            
+            # Create and set new media
+            media = self.instance.media_new(url)
+            self.vlc_player.set_media(media)
+            
+            # Request play
+            self.vlc_player.play()
+            self.is_playing_requested = True
+            
+            self.status_label.setText("CONNECTING...")
+            self.status_label.setStyleSheet("color: #007AFF;")
+            self.hide_timer.start()
+            logging.info("Playback started successfully")
+        except Exception as e:
+            logging.error(f"Playback error: {e}")
+            self.status_label.setText("PLAYBACK ERROR")
+            self.status_label.setStyleSheet("color: #EF4444;")
 
     def stop_stream(self):
+        logging.info("Stopping stream...")
         self.is_playing_requested = False
         self.status_label.setText("STOPPING...")
-        QTimer.singleShot(10, self.vlc_player.stop)
+        self.status_label.setStyleSheet("color: #777;")
+        
+        # Stop VLC player
+        self.vlc_player.stop()
+        
         self.status_label.setText("STOPPED")
         self.show_controls()
+        logging.info("Stream stopped")
 
     def reload_stream(self):
-        self.vlc_player.stop()
-        QTimer.singleShot(800, self.play_stream)
+        logging.info("Reloading stream...")
+        # Stop first
+        if self.vlc_player.is_playing():
+            self.vlc_player.stop()
+        
+        # Minor delay to let VLC settle
+        QTimer.singleShot(500, self.play_stream)
 
     def update_volume(self, val):
         self.vlc_player.audio_set_volume(val)
