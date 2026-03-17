@@ -6,7 +6,7 @@ import vlc
 import logging
 from dotenv import load_dotenv
 
-# Load environment variables
+# Path resolution helper for PyInstaller
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     try:
@@ -15,7 +15,9 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
+# Load environment variables
 load_dotenv(resource_path(".env"))
+
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLineEdit, QPushButton, QLabel, 
                              QSlider, QFrame, QStackedWidget, QMessageBox)
@@ -73,13 +75,14 @@ class IPTVPlayer(QMainWindow):
         
         # Channel Config
         self.channels = {
-            "TAMIL": os.getenv("TAMIL_STREAM_URL", ""),
-            "ENGLISH": os.getenv("ENGLISH_STREAM_URL", "")
+            "HINDI HD": os.getenv("HINDI_STREAM_HD", ""),
+            "ENGLISH HD": os.getenv("ENGLISH_STREAM_HD", ""),
+            "TAMIL": os.getenv("TAMIL_STREAM_URL", "")
         }
-        self.current_channel = "TAMIL"
+        self.current_channel = "HINDI HD"
         
-        # Link state - Use the first available or default to empty
-        self.default_url = self.channels.get("TAMIL") or ""
+        # Link state
+        self.default_url = self.channels.get("HINDI HD") or ""
         
         # VLC Setup - Optimized for faster start
         args = [
@@ -103,7 +106,7 @@ class IPTVPlayer(QMainWindow):
         
         # Timers
         self.hide_timer = QTimer()
-        self.hide_timer.setInterval(4000) # Slightly longer hide time
+        self.hide_timer.setInterval(4000)
         self.hide_timer.timeout.connect(self.hide_controls)
         
         self.health_timer = QTimer()
@@ -163,19 +166,26 @@ class IPTVPlayer(QMainWindow):
         chan_row.setSpacing(10)
         chan_row.addWidget(QLabel("CHANNEL:"))
         
+        self.hindi_btn = QPushButton("HINDI HD")
+        self.english_btn = QPushButton("ENGLISH HD")
         self.tamil_btn = QPushButton("TAMIL")
-        self.english_btn = QPushButton("ENGLISH")
         
-        for btn in [self.tamil_btn, self.english_btn]:
+        self.channel_btns = {
+            "HINDI HD": self.hindi_btn,
+            "ENGLISH HD": self.english_btn,
+            "TAMIL": self.tamil_btn
+        }
+        
+        for name, btn in self.channel_btns.items():
             btn.setCheckable(True)
-            btn.setFixedHeight(30)
+            btn.setFixedHeight(35)
             btn.setStyleSheet("""
                 QPushButton {
                     background-color: rgba(255,255,255,0.1);
                     color: #fff;
-                    border-radius: 6px;
-                    padding: 0 15px;
-                    font-size: 11px;
+                    border-radius: 8px;
+                    padding: 0 20px;
+                    font-size: 12px;
                     font-weight: bold;
                     border: 1px solid rgba(255,255,255,0.2);
                 }
@@ -187,16 +197,16 @@ class IPTVPlayer(QMainWindow):
                     background-color: rgba(255,255,255,0.2);
                 }
             """)
+            btn.clicked.connect(lambda checked, n=name: self.switch_channel(n))
         
-        self.tamil_btn.setChecked(True)
-        self.tamil_btn.clicked.connect(lambda: self.switch_channel("TAMIL"))
-        self.english_btn.clicked.connect(lambda: self.switch_channel("ENGLISH"))
+        self.hindi_btn.setChecked(True)
         
-        chan_row.addWidget(self.tamil_btn)
+        chan_row.addWidget(self.hindi_btn)
         chan_row.addWidget(self.english_btn)
+        chan_row.addWidget(self.tamil_btn)
         chan_row.addStretch()
         
-        # Row 2: Buttons
+        # Row 2: Control Buttons
         btn_row = QHBoxLayout()
         btn_row.setSpacing(15)
         self.play_btn = GlassButton("▶  PLAY", "#22C55E")
@@ -241,7 +251,7 @@ class IPTVPlayer(QMainWindow):
 
     def update_overlay_pos(self):
         w = min(900, self.width() - 80)
-        h = 220 # Increased height for channel row
+        h = 230 # Room for channel row
         x = (self.width() - w) // 2
         y = self.height() - h - 40
         self.overlay.setGeometry(x, y, w, h)
@@ -251,8 +261,8 @@ class IPTVPlayer(QMainWindow):
         url = self.channels.get(channel_name, "")
         
         # Update UI buttons state
-        self.tamil_btn.setChecked(channel_name == "TAMIL")
-        self.english_btn.setChecked(channel_name == "ENGLISH")
+        for name, btn in self.channel_btns.items():
+            btn.setChecked(name == channel_name)
         
         if not url:
             self.status_label.setText(f"ERROR: {channel_name} LINK MISSING")
@@ -297,19 +307,20 @@ class IPTVPlayer(QMainWindow):
     def play_stream(self):
         url = self.url_input.text().strip()
         if url:
-            media = self.instance.media_new(url)
-            self.vlc_player.set_media(media)
-            self.vlc_player.play()
-            self.is_playing_requested = True
-            self.status_label.setText("CONNECTING...")
-            self.hide_timer.start()
+            try:
+                media = self.instance.media_new(url)
+                self.vlc_player.set_media(media)
+                self.vlc_player.play()
+                self.is_playing_requested = True
+                self.status_label.setText("CONNECTING...")
+                self.hide_timer.start()
+            except Exception as e:
+                logging.error(f"Playback error: {e}")
+                self.status_label.setText("PLAYBACK ERROR")
 
     def stop_stream(self):
-        # Fix: Stop in a way that doesn't hang the UI
         self.is_playing_requested = False
         self.status_label.setText("STOPPING...")
-        # VLC stop can block, we can just pause and release if needed, 
-        # or call stop. Let's try to ensure it doesn't hang.
         QTimer.singleShot(10, self.vlc_player.stop)
         self.status_label.setText("STOPPED")
         self.show_controls()
