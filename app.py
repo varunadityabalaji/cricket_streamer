@@ -63,8 +63,15 @@ class IPTVPlayer(QMainWindow):
         self.resize(1100, 750)
         self.setMinimumSize(850, 600)
         
-        # Link state - Use .env if available, otherwise stay empty
-        self.default_url = os.getenv("DEFAULT_STREAM_URL", "")
+        # Channel Config
+        self.channels = {
+            "TAMIL": os.getenv("TAMIL_STREAM_URL", ""),
+            "ENGLISH": os.getenv("ENGLISH_STREAM_URL", "")
+        }
+        self.current_channel = "TAMIL"
+        
+        # Link state - Use the first available or default to empty
+        self.default_url = self.channels.get("TAMIL") or ""
         
         # VLC Setup - Optimized for faster start
         args = [
@@ -143,6 +150,44 @@ class IPTVPlayer(QMainWindow):
         top_row.addWidget(QLabel("STREAM SOURCE:"))
         top_row.addWidget(self.url_input, 1)
         
+        # Row 1.5: Channel Selection
+        chan_row = QHBoxLayout()
+        chan_row.setSpacing(10)
+        chan_row.addWidget(QLabel("CHANNEL:"))
+        
+        self.tamil_btn = QPushButton("TAMIL")
+        self.english_btn = QPushButton("ENGLISH")
+        
+        for btn in [self.tamil_btn, self.english_btn]:
+            btn.setCheckable(True)
+            btn.setFixedHeight(30)
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: rgba(255,255,255,0.1);
+                    color: #fff;
+                    border-radius: 6px;
+                    padding: 0 15px;
+                    font-size: 11px;
+                    font-weight: bold;
+                    border: 1px solid rgba(255,255,255,0.2);
+                }
+                QPushButton:checked {
+                    background-color: #007AFF;
+                    border: 1px solid #007AFF;
+                }
+                QPushButton:hover:not(:checked) {
+                    background-color: rgba(255,255,255,0.2);
+                }
+            """)
+        
+        self.tamil_btn.setChecked(True)
+        self.tamil_btn.clicked.connect(lambda: self.switch_channel("TAMIL"))
+        self.english_btn.clicked.connect(lambda: self.switch_channel("ENGLISH"))
+        
+        chan_row.addWidget(self.tamil_btn)
+        chan_row.addWidget(self.english_btn)
+        chan_row.addStretch()
+        
         # Row 2: Buttons
         btn_row = QHBoxLayout()
         btn_row.setSpacing(15)
@@ -175,6 +220,7 @@ class IPTVPlayer(QMainWindow):
         bottom_row.addWidget(self.vol_slider)
         
         overlay_layout.addLayout(top_row)
+        overlay_layout.addLayout(chan_row)
         overlay_layout.addLayout(btn_row)
         overlay_layout.addLayout(bottom_row)
         
@@ -187,10 +233,28 @@ class IPTVPlayer(QMainWindow):
 
     def update_overlay_pos(self):
         w = min(900, self.width() - 80)
-        h = 180 # Increased height for breathing room
+        h = 220 # Increased height for channel row
         x = (self.width() - w) // 2
         y = self.height() - h - 40
         self.overlay.setGeometry(x, y, w, h)
+
+    def switch_channel(self, channel_name):
+        self.current_channel = channel_name
+        url = self.channels.get(channel_name, "")
+        
+        # Update UI buttons state
+        self.tamil_btn.setChecked(channel_name == "TAMIL")
+        self.english_btn.setChecked(channel_name == "ENGLISH")
+        
+        if not url:
+            self.status_label.setText(f"ERROR: {channel_name} LINK MISSING")
+            QMessageBox.warning(self, "Link Missing", 
+                              f"The {channel_name} stream link was not found in your .env file.")
+            return
+
+        self.url_input.setText(url)
+        self.status_label.setText(f"SWITCHING TO {channel_name}...")
+        self.play_stream()
 
     def embed_vlc(self):
         if platform.system() == "Darwin":
