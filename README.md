@@ -1,42 +1,49 @@
-# Cricket Streamer
+# Match Watcher Pro 🏏
 
-This project is a standalone IPTV player for macOS developed for high-stability cricket streaming. It utilizes the VLC media engine and PyQt6 for a modern, responsive user interface.
+A simple and stable IPTV player for macOS, specially designed for watching cricket streams without interruptions.
 
-## Description
+![App Icon](app_icon.png)
 
-The application provides an immersive viewing experience with features such as glassmorphism-based UI controls, motion-activated control visibility, and automated stream health monitoring. It is designed to handle common IPTV stability issues through configurable network caching and automated reconnection logic.
+## What is this?
+This is a standalone macOS app that lets you stream IPTV links (like `.m3u8`). It uses the powerful VLC engine behind the scenes to make sure the stream stays smooth and automatically reconnects if the connection drops.
 
-## Key Features
+## Features
+- **Modern Design**: A clean, dark-mode interface that stays out of your way.
+- **Auto-Fix**: If the stream stops or lags, the app automatically tries to reload it for you.
+- **Easy Controls**: Play, Stop, and Reload buttons with a simple volume slider.
+- **Full Screen**: Double-click the video to go full screen.
 
-- **Automated Stream Recovery**: Background monitoring to detect and resolve stream drops.
-- **Dynamic UI**: Motion-sensitive control bar that hides during active playback.
-- **VLC Engine Integration**: High-performance decoding for HLS/M3U8 protocols.
-- **macOS Bundle**: Packaged as a native `.app` with custom icon assets.
+## How to Install and Run
 
-## Implementation Details
+### 1. Prerequisites
+Before you start, make sure you have these two things installed on your Mac:
+1. **VLC Media Player**: The app needs VLC's engine to work.
+   ```bash
+   brew install --cask vlc
+   ```
+2. **Python**: Make sure you have Python 3 installed.
 
-The implementation leverages `python-vlc` for low-level media handling and `PyQt6` for the window management and event loops. The build process uses `PyInstaller` to create a self-contained application bundle.
-
-## Installation and Build
-
-### Prerequisites
-- macOS
-- [VLC Media Player](https://www.videolan.org/vlc/)
-- [uv](https://github.com/astral-sh/uv) (recommended) or `pip`
-
-### Build Process
-To set up the environment and compile the application:
-
+### 2. Quick Start (Running Locally)
+If you just want to run the app right now:
 ```bash
+# Install the required libraries
+pip install -r requirements.txt
+
+# Start the app
+python3 app.py
+```
+
+### 3. Build the Standalone App
+If you want to create a real `.app` file that you can keep in your Applications folder:
+```bash
+# This script sets everything up and builds the app for you
 chmod +x setup_and_build.sh
 ./setup_and_build.sh
 ```
+Once it's done, you'll find **Match Watcher.app** inside the `dist` folder.
 
-The resulting executable will be located in the `dist/` directory.
-
-## Dependencies
-
-Refer to `requirements.txt` for the full list of Python dependencies. Core libraries include:
-- `PyQt6`
-- `python-vlc`
-- `pyinstaller`
+## How to Use
+1. Paste your IPTV or `.m3u8` link into the **STREAM SOURCE** box.
+2. Click **PLAY**.
+3. If the stream ever gets stuck, click **RELOAD** to refresh it manually.
+4. Move your mouse to see the controls; they will hide automatically while you're watching.
