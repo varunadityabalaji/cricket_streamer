@@ -4,6 +4,10 @@ import platform
 import ctypes
 import vlc
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLineEdit, QPushButton, QLabel, 
                              QSlider, QFrame, QStackedWidget)
@@ -59,8 +63,8 @@ class IPTVPlayer(QMainWindow):
         self.resize(1100, 750)
         self.setMinimumSize(850, 600)
         
-        # Link state
-        self.default_url = "http://202.70.146.135:8000/play/a026/index.m3u8"
+        # Link state - Use .env if available, otherwise stay empty
+        self.default_url = os.getenv("DEFAULT_STREAM_URL", "")
         
         # VLC Setup - Optimized for faster start
         args = [
