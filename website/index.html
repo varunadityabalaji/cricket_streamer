@@ -97,7 +97,9 @@
             letter-spacing: -0.03em;
             margin-bottom: 20px;
             background: linear-gradient(135deg, #fff 30%, rgba(255,255,255,0.55));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .hero-sub {
@@ -304,48 +306,53 @@
 <!-- INSTALL -->
 <section id="install" class="install-section">
     <h2 class="section-title">How to Install</h2>
-    <p class="section-sub">Three simple steps to get started.</p>
+    <p class="section-sub">Follow these steps carefully to start streaming.</p>
 
     <div class="step">
         <div class="step-num">1</div>
         <div class="step-content">
-            <h3>Install VLC Media Player</h3>
-            <p>Match Watcher uses the VLC engine for playback. Download and install it from <a href="https://www.videolan.org/vlc/" target="_blank" style="color:var(--accent-blue)">videolan.org</a> or run:</p>
-            <div class="command-block">brew install --cask vlc</div>
+            <h3>Install VLC Player (Required)</h3>
+            <p>Match Watcher requires the VLC engine to play videos. Choose one of the two ways below to install it:</p>
+            
+            <div style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 12px; border: 1px solid var(--border); margin-top: 12px;">
+                <p style="font-weight: 700; color: #fff; margin-bottom: 8px;">Option A: Official Installer (Recommended)</p>
+                <a href="https://get.videolan.org/vlc/last/macosx/vlc-intel64.dmg" class="btn-secondary" style="padding:10px 16px; font-size:13px">
+                    ⬇️ Download VLC DMG
+                </a>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 12px; border: 1px solid var(--border); margin-top: 12px;">
+                <p style="font-weight: 700; color: #fff; margin-bottom: 8px;">Option B: One-Click Terminal Setup</p>
+                <p style="font-size: 13px; margin-bottom: 12px;">Copy and paste this into Terminal to install Homebrew and VLC automatically:</p>
+                <div class="command-block">/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && brew install --cask vlc</div>
+            </div>
         </div>
     </div>
 
     <div class="step">
         <div class="step-num">2</div>
         <div class="step-content">
-            <h3>Download and Open the DMG</h3>
-            <p>Click the download button above. Open the <code>MatchWatcher.dmg</code> file and drag the app into your Applications folder.</p>
+            <h3>Download Match Watcher</h3>
+            <p>Download the <code>MatchWatcher.dmg</code> from the hero section above. Open the DMG and <strong>drag</strong> the Match Watcher icon into your <strong>Applications</strong> folder.</p>
         </div>
     </div>
 
     <div class="step">
         <div class="step-num">3</div>
         <div class="step-content">
-            <h3>Bypass Gatekeeper (First Launch Only)</h3>
-            <p>Because Match Watcher is not signed with an Apple Developer certificate, macOS will block it on first launch. See the instructions below to bypass this.</p>
+            <h3>First Launch (Gatekeeper)</h3>
+            <p>Because the app is not from the App Store, macOS may block it. To fix this instantly, <strong>right-click</strong> the app in your Applications folder and select <strong>"Open"</strong>. If that fails, see the magic command below.</p>
         </div>
     </div>
 
     <!-- BYPASS SECTION -->
     <div class="bypass-card" id="bypass">
-        <h3>⚠️ macOS Gatekeeper — Cannot be opened</h3>
-        <p>Apple's Gatekeeper blocks apps from unidentified developers by default. This is normal for open-source apps distributed outside the Mac App Store. Here are three ways to fix it:</p>
-
-        <p><strong>Option A — Right-click method (easiest):</strong></p>
-        <p>Right-click (or Control-click) on <code>Match Watcher.app</code> in your Applications folder and choose <strong>"Open"</strong> from the menu. Click <strong>"Open"</strong> again in the dialog. You only need to do this once.</p>
-
-        <p><strong>Option B — Terminal command:</strong></p>
-        <p>If the right-click method doesn't work, open Terminal and run:</p>
+        <h3>🚀 One-Click Launch Fix</h3>
+        <p>If you see a message saying the app "cannot be opened" or "is damaged," don't worry. This is standard macOS security for open-source apps. Copy and paste this single command into your <strong>Terminal</strong> and press Enter:</p>
+        
         <div class="command-block">xattr -cr /Applications/Match\ Watcher.app</div>
-        <p>Then try launching the app normally.</p>
-
-        <p><strong>Option C — System Settings:</strong></p>
-        <p>After a failed launch, go to <strong>System Settings → Privacy & Security</strong>. Scroll down and you'll see a message saying Match Watcher was blocked. Click <strong>"Open Anyway"</strong>.</p>
+        
+        <p><strong>How to open Terminal?</strong> Press <code>Cmd + Space</code>, type "Terminal", and hit Enter. Paste the command above and you're good to go!</p>
     </div>
 </section>
 
