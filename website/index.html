@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Watcher — Live Cricket Streaming for Mac</title>
+    <meta name="description" content="Match Watcher is a free, lightweight IPTV player built for watching live cricket on macOS. Stream any M3U8 link instantly.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #06060a;
+            --surface: #0f0f17;
+            --border: rgba(255,255,255,0.08);
+            --text: #e8e8f0;
+            --muted: #6b6b80;
+            --accent-blue: #4f8ef7;
+            --accent-purple: #a855f7;
+            --gradient: linear-gradient(135deg, #4f8ef7, #a855f7);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── NOISE TEXTURE ── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 48px;
+            backdrop-filter: blur(20px);
+            background: rgba(6,6,10,0.8);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; }
+        .nav-logo img { width: 28px; height: 28px; border-radius: 6px; }
+        .nav-link { color: var(--muted); font-size: 14px; text-decoration: none; transition: color .2s; }
+        .nav-link:hover { color: var(--text); }
+
+        /* ── HERO ── */
+        .hero {
+            position: relative;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center;
+            min-height: 100vh;
+            padding: 120px 24px 80px;
+            z-index: 1;
+        }
+
+        /* Glow blobs */
+        .blob { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.18; pointer-events: none; }
+        .blob-1 { width: 600px; height: 600px; background: var(--accent-blue); top: -100px; left: -200px; }
+        .blob-2 { width: 500px; height: 500px; background: var(--accent-purple); top: 100px; right: -150px; }
+
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: rgba(79,142,247,0.1);
+            border: 1px solid rgba(79,142,247,0.3);
+            border-radius: 99px; padding: 6px 16px;
+            font-size: 12px; font-weight: 600; color: var(--accent-blue);
+            margin-bottom: 28px; letter-spacing: 0.05em;
+        }
+        .hero-badge .dot { width: 6px; height: 6px; background: var(--accent-blue); border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        .hero-icon {
+            width: 140px; height: 140px;
+            border-radius: 30px;
+            box-shadow: 0 0 80px rgba(79,142,247,0.3), 0 0 30px rgba(168,85,247,0.2);
+            margin-bottom: 36px;
+            animation: float 4s ease-in-out infinite;
+        }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+
+        h1 {
+            font-size: clamp(2.5rem, 6vw, 5rem);
+            font-weight: 900;
+            line-height: 1.08;
+            letter-spacing: -0.03em;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff 30%, rgba(255,255,255,0.55));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .hero-sub {
+            font-size: clamp(1rem, 2vw, 1.2rem);
+            color: var(--muted);
+            max-width: 540px;
+            line-height: 1.7;
+            margin-bottom: 48px;
+        }
+
+        .btn-group { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+
+        .btn-primary {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: var(--gradient);
+            color: #fff; font-weight: 700; font-size: 16px;
+            border: none; border-radius: 14px;
+            padding: 16px 32px; cursor: pointer;
+            text-decoration: none;
+            box-shadow: 0 0 40px rgba(79,142,247,0.3);
+            transition: transform .2s, box-shadow .2s;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 60px rgba(79,142,247,0.4); }
+
+        .btn-secondary {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            color: var(--text); font-weight: 600; font-size: 15px;
+            border-radius: 14px; padding: 16px 28px;
+            text-decoration: none; cursor: pointer;
+            transition: background .2s, transform .2s;
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+
+        .sub-note { margin-top: 18px; font-size: 12px; color: var(--muted); }
+        .sub-note a { color: var(--muted); text-decoration: underline; }
+
+        /* ── FEATURES ── */
+        .section { position: relative; z-index: 1; padding: 100px 24px; }
+        .section-title { text-align: center; font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 800; margin-bottom: 12px; }
+        .section-sub { text-align: center; color: var(--muted); margin-bottom: 60px; font-size: 15px; }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px; max-width: 1100px; margin: 0 auto;
+        }
+
+        .feature-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px; padding: 32px;
+            transition: border-color .2s, transform .2s;
+        }
+        .feature-card:hover { border-color: rgba(79,142,247,0.4); transform: translateY(-4px); }
+        .feature-icon { font-size: 32px; margin-bottom: 16px; }
+        .feature-title { font-weight: 700; font-size: 17px; margin-bottom: 8px; }
+        .feature-desc { color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+        /* ── INSTALL STEPS ── */
+        .install-section { 
+            max-width: 800px; margin: 0 auto;
+            padding: 80px 24px;
+            position: relative; z-index: 1;
+        }
+
+        .step {
+            display: flex; gap: 20px;
+            margin-bottom: 40px; align-items: flex-start;
+        }
+        .step-num {
+            flex-shrink: 0;
+            width: 40px; height: 40px;
+            background: var(--gradient);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 15px;
+        }
+        .step-content h3 { font-weight: 700; margin-bottom: 6px; }
+        .step-content p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+        .step-content code {
+            display: inline-block; background: rgba(255,255,255,0.07);
+            border: 1px solid var(--border);
+            border-radius: 6px; padding: 2px 8px;
+            font-family: 'Menlo', monospace; font-size: 13px; color: #a8d8ff;
+        }
+
+        /* ── BYPASS WARNING CARD ── */
+        .bypass-card {
+            background: rgba(239,68,68,0.06);
+            border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 20px; padding: 32px;
+            max-width: 800px; margin: 0 auto 60px;
+        }
+        .bypass-card h3 { font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+        .bypass-card p { color: var(--muted); font-size: 14px; line-height: 1.65; margin-bottom: 12px; }
+        .bypass-card .command-block {
+            background: rgba(0,0,0,0.4); border: 1px solid var(--border);
+            border-radius: 10px; padding: 14px 18px;
+            font-family: 'Menlo', monospace; font-size: 13px; color: #a8d8ff;
+            margin-top: 10px; margin-bottom: 10px;
+            white-space: pre-wrap; word-break: break-all;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            position: relative; z-index: 1;
+            text-align: center; padding: 40px 24px;
+            border-top: 1px solid var(--border);
+            color: var(--muted); font-size: 13px;
+        }
+        footer a { color: var(--muted); text-decoration: none; }
+        footer a:hover { color: var(--text); }
+
+        @media (max-width: 600px) {
+            nav { padding: 14px 20px; }
+            .btn-group { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-logo">
+        <img src="hero_icon.png" alt="Match Watcher Logo">
+        Match Watcher
+    </div>
+    <div style="display:flex;gap:28px;align-items:center">
+        <a class="nav-link" href="#features">Features</a>
+        <a class="nav-link" href="#install">Install</a>
+        <a class="nav-link" href="https://github.com/varunadityabalaji/cricket_streamer" target="_blank">GitHub ↗</a>
+    </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="hero-badge">
+        <span class="dot"></span>
+        Live Streaming · macOS · Free
+    </div>
+
+    <img src="hero_icon.png" alt="Match Watcher Icon" class="hero-icon">
+
+    <h1>Watch Cricket Live.<br>No Fuss.</h1>
+
+    <p class="hero-sub">
+        Match Watcher is a lightweight, open-source IPTV player for macOS. Stream any M3U8 link, switch between channels instantly, and enjoy hands-free full-screen viewing.
+    </p>
+
+    <div class="btn-group">
+        <a href="MatchWatcher.dmg" class="btn-primary" download>
+            ↓ Download for Mac
+        </a>
+        <a href="https://github.com/varunadityabalaji/cricket_streamer" target="_blank" class="btn-secondary">
+            View on GitHub
+        </a>
+    </div>
+    <p class="sub-note">macOS 12+ required · VLC must be installed · <a href="#bypass">Gatekeeper bypass instructions below</a></p>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+    <h2 class="section-title">Built for Viewers</h2>
+    <p class="section-sub">Everything you need, nothing you don't.</p>
+
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">📡</div>
+            <div class="feature-title">Any M3U8 Stream</div>
+            <div class="feature-desc">Paste any IPTV link and start watching instantly. Works with HLS live streams from any provider.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🇮🇳</div>
+            <div class="feature-title">Hindi & English HD</div>
+            <div class="feature-desc">Pre-configured channel buttons for switching between Hindi HD and English HD commentary in one click.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🖥️</div>
+            <div class="feature-title">Immersive Full Screen</div>
+            <div class="feature-desc">Double-click to go full screen. The control bar auto-hides and reappears when you move your mouse.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">♻️</div>
+            <div class="feature-title">Auto-Recovery</div>
+            <div class="feature-desc">Stream health is monitored every 5 seconds. On a drop, the app reconnects automatically without you lifting a finger.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🔊</div>
+            <div class="feature-title">VLC-Powered Audio</div>
+            <div class="feature-desc">Built on the battle-tested VLC engine. Crystal-clear audio and video decoding with virtually no load on your CPU.</div>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🔓</div>
+            <div class="feature-title">Open Source</div>
+            <div class="feature-desc">Fully open source and free. Inspect the code, add your own channels, or self-build the app from the repository.</div>
+        </div>
+    </div>
+</section>
+
+<!-- INSTALL -->
+<section id="install" class="install-section">
+    <h2 class="section-title">How to Install</h2>
+    <p class="section-sub">Three simple steps to get started.</p>
+
+    <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+            <h3>Install VLC Media Player</h3>
+            <p>Match Watcher uses the VLC engine for playback. Download and install it from <a href="https://www.videolan.org/vlc/" target="_blank" style="color:var(--accent-blue)">videolan.org</a> or run:</p>
+            <div class="command-block">brew install --cask vlc</div>
+        </div>
+    </div>
+
+    <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+            <h3>Download and Open the DMG</h3>
+            <p>Click the download button above. Open the <code>MatchWatcher.dmg</code> file and drag the app into your Applications folder.</p>
+        </div>
+    </div>
+
+    <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+            <h3>Bypass Gatekeeper (First Launch Only)</h3>
+            <p>Because Match Watcher is not signed with an Apple Developer certificate, macOS will block it on first launch. See the instructions below to bypass this.</p>
+        </div>
+    </div>
+
+    <!-- BYPASS SECTION -->
+    <div class="bypass-card" id="bypass">
+        <h3>⚠️ macOS Gatekeeper — Cannot be opened</h3>
+        <p>Apple's Gatekeeper blocks apps from unidentified developers by default. This is normal for open-source apps distributed outside the Mac App Store. Here are three ways to fix it:</p>
+
+        <p><strong>Option A — Right-click method (easiest):</strong></p>
+        <p>Right-click (or Control-click) on <code>Match Watcher.app</code> in your Applications folder and choose <strong>"Open"</strong> from the menu. Click <strong>"Open"</strong> again in the dialog. You only need to do this once.</p>
+
+        <p><strong>Option B — Terminal command:</strong></p>
+        <p>If the right-click method doesn't work, open Terminal and run:</p>
+        <div class="command-block">xattr -cr /Applications/Match\ Watcher.app</div>
+        <p>Then try launching the app normally.</p>
+
+        <p><strong>Option C — System Settings:</strong></p>
+        <p>After a failed launch, go to <strong>System Settings → Privacy & Security</strong>. Scroll down and you'll see a message saying Match Watcher was blocked. Click <strong>"Open Anyway"</strong>.</p>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+    <p>Built with Python, PyQt6 & VLC &mdash; Open source under the <a href="https://github.com/varunadityabalaji/cricket_streamer/blob/main/LICENSE">MIT License</a></p>
+    <p style="margin-top:8px">
+        <a href="https://github.com/varunadityabalaji/cricket_streamer" target="_blank">GitHub</a>
+        &nbsp;&middot;&nbsp;
+        <a href="MatchWatcher.dmg" download>Download DMG</a>
+    </p>
+</footer>
+
+</body>
+</html>

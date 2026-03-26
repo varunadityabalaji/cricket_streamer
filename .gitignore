@@ -10,4 +10,5 @@ icon.icns
 icon.iconset/
 /tmp/match_watcher.log
 .env
+.netlify/
 
